@@ -1,44 +1,76 @@
-// Função para fazer a requisição de dados para cada cotação
-async function fetchPrice(url, elementId) {
-    try {
-        // Realiza a requisição para o URL passado
-        const response = await fetch(url);
-        
-        // Verifica se a resposta foi bem-sucedida
-        if (!response.ok) throw new Error('Erro ao buscar dados');
-        
-        // Converte a resposta para texto (porque estamos simulando)
-        const data = await response.text();
+const apiKeyAlphaVantage = 'SUA_CHAVE_API_AQUI'; // Substitua pela sua chave API da Alpha Vantage
 
-        // Atualiza o card com os dados
-        document.getElementById(elementId).querySelector('.price').innerText = `R$ ${data}`;
+// Fetch S&P500 data (using Alpha Vantage)
+async function fetchSP500() {
+    try {
+        const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY&apikey=${apiKeyAlphaVantage}`);
+        const data = await response.json();
+        const price = data['Global Quote']['05. price'];
+        document.getElementById('sp500').querySelector('.price').textContent = `$${parseFloat(price).toFixed(2)}`;
     } catch (error) {
-        // Caso haja erro, exibe uma mensagem de erro
-        document.getElementById(elementId).querySelector('.price').innerText = 'Erro ao carregar';
-        console.error(error);
+        document.getElementById('sp500').querySelector('.price').textContent = 'Error loading';
     }
 }
 
-// Função para atualizar as cotações de todos os cards
-function updatePrices() {
-    // Atualiza o card do S&P500
-    fetchPrice('https://finviz.com/map.ashx', 'sp500');
-
-    // Atualiza o card do BTC/USD
-    fetchPrice('https://finviz.com/crypto_charts.ashx?t=BTCUSD&p=d', 'btc');
-
-    // Atualiza o card do EUR/USD
-    fetchPrice('https://finviz.com/forex_charts.ashx?t=EURUSD&p=d', 'eurusd');
-
-    // Atualiza o card do EUR/REAL
-    fetchPrice('https://br.investing.com/currencies/eur-brl', 'eurbrl');
-
-    // Atualiza o card do USD/REAL
-    fetchPrice('https://es.investing.com/currencies/usd-brl', 'usdbrl');
+// Fetch BTC/USD data (using CoinGecko)
+async function fetchBTCUSD() {
+    try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+        const data = await response.json();
+        const price = data.bitcoin.usd;
+        document.getElementById('btc-usd').querySelector('.price').textContent = `$${price}`;
+    } catch (error) {
+        document.getElementById('btc-usd').querySelector('.price').textContent = 'Error loading';
+    }
 }
 
-// Define um intervalo para atualizar as cotações a cada 30 segundos
-setInterval(updatePrices, 30000);
+// Fetch EUR/USD data (using Alpha Vantage)
+async function fetchEURUSD() {
+    try {
+        const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=EUR&to_currency=USD&apikey=${apiKeyAlphaVantage}`);
+        const data = await response.json();
+        const price = data['Realtime Currency Exchange Rate']['5. Exchange Rate'];
+        document.getElementById('eur-usd').querySelector('.price').textContent = `$${parseFloat(price).toFixed(4)}`;
+    } catch (error) {
+        document.getElementById('eur-usd').querySelector('.price').textContent = 'Error loading';
+    }
+}
 
-// Atualiza as cotações ao carregar a página
-updatePrices();
+// Fetch EUR/BRL data (using Alpha Vantage)
+async function fetchEURBRL() {
+    try {
+        const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=EUR&to_currency=BRL&apikey=${apiKeyAlphaVantage}`);
+        const data = await response.json();
+        const price = data['Realtime Currency Exchange Rate']['5. Exchange Rate'];
+        document.getElementById('eur-brl').querySelector('.price').textContent = `R$${parseFloat(price).toFixed(4)}`;
+    } catch (error) {
+        document.getElementById('eur-brl').querySelector('.price').textContent = 'Error loading';
+    }
+}
+
+// Fetch USD/BRL data (using Alpha Vantage)
+async function fetchUSDBRL() {
+    try {
+        const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=BRL&apikey=${apiKeyAlphaVantage}`);
+        const data = await response.json();
+        const price = data['Realtime Currency Exchange Rate']['5. Exchange Rate'];
+        document.getElementById('usd-brl').querySelector('.price').textContent = `R$${parseFloat(price).toFixed(4)}`;
+    } catch (error) {
+        document.getElementById('usd-brl').querySelector('.price').textContent = 'Error loading';
+    }
+}
+
+// Fetch all data every 30 seconds
+function fetchAllData() {
+    fetchSP500();
+    fetchBTCUSD();
+    fetchEURUSD();
+    fetchEURBRL();
+    fetchUSDBRL();
+}
+
+// Run the fetch initially
+fetchAllData();
+
+// Set interval to update every 30 seconds
+setInterval(fetchAllData, 30000);
